@@ -98,19 +98,19 @@ export default function Page() {
         <div className="flex items-center justify-between px-2">
           <div className="flex items-center gap-2.5">
             <div className="grid size-9 place-items-center rounded-xl bg-plum text-white shadow-sm"><Heart className="size-4 fill-current" /></div>
-            <div><p className="font-display text-[19px] font-semibold tracking-tight">Celebrate<span className="text-rose">AI</span></p><p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted">Event planning, elevated</p></div>
+            <div><p className="font-display text-[19px] font-semibold tracking-tight">Celebrate<span className="text-rose">AI</span></p><p className="text-[10px] font-medium uppercase tracking-[0.18em] text-ink">Event planning, elevated</p></div>
           </div>
           <button className="min-h-11 min-w-11 rounded-lg p-2 text-muted hover:bg-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plum/40 lg:hidden" aria-label="Close menu" onClick={() => setIsMenuOpen(false)}><X className="size-4" /></button>
         </div>
         <div className="mt-11 flex flex-1 flex-col">
           <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink/60">Workspace</p>
           <nav className="mt-3 flex flex-col gap-1" aria-label="Workspace navigation">
-            {navItems.map(({ label, icon: Icon }) => <button key={label} onClick={() => { setActiveNav(label); setIsMenuOpen(false) }} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plum/40 ${activeNav === label ? 'bg-plum text-white shadow-sm' : 'text-ink/80 hover:bg-soft hover:text-ink'}`}><Icon className="size-[17px]" />{label}</button>)}
+            {navItems.map(({ label, icon: Icon }) => <button key={label} onClick={() => { setActiveNav(label); setIsMenuOpen(false) }} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plum/40 ${activeNav === label ? 'bg-plum text-white shadow-sm' : 'text-ink hover:bg-soft'}`}><Icon className="size-[17px]" />{label}</button>)}
           </nav>
           <p className="mt-10 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink/60">Manage</p>
           <nav className="mt-3 flex flex-col gap-1" aria-label="Management navigation">
-            <button className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-ink/80 transition hover:bg-soft hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plum/40"><CalendarDays className="size-[17px]" />Events <span className="ml-auto rounded-full bg-soft px-2 py-0.5 text-[11px]">3</span></button>
-            <button className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-ink/80 transition hover:bg-soft hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plum/40"><Sparkles className="size-[17px]" />AI ideas</button>
+            <button className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-ink transition hover:bg-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plum/40"><CalendarDays className="size-[17px]" />Events <span className="ml-auto rounded-full bg-soft px-2 py-0.5 text-[11px]">3</span></button>
+            <button className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-ink transition hover:bg-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plum/40"><Sparkles className="size-[17px]" />AI ideas</button>
           </nav>
         </div>
         <div className="rounded-2xl bg-plum px-4 py-4 text-white">
@@ -118,7 +118,7 @@ export default function Page() {
           <p className="text-sm font-semibold">Need a fresh idea?</p><p className="mt-1 text-xs leading-5 text-white/65">Ask your planning co-pilot to make the next decision easier.</p>
           <button onClick={(event) => openAssistant(event.currentTarget)} className="mt-3 min-h-11 text-xs font-semibold text-gold hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold">Open AI co-pilot <ArrowUpRight className="ml-1 inline size-3" /></button>
         </div>
-        <div className="mt-5 flex items-center gap-3 border-t border-line pt-5"><div className="grid size-9 place-items-center rounded-full bg-rose/20 text-sm font-semibold text-plum">AK</div><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">Aarav & Kavya</p><p className="text-xs text-muted">Personal workspace</p></div><MoreHorizontal className="size-4 text-muted" /></div>
+        <div className="mt-5 flex items-center gap-3 border-t border-line pt-5"><div className="grid size-9 place-items-center rounded-full bg-rose/20 text-sm font-semibold text-plum">AK</div><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">Aarav & Kavya</p><p className="text-xs text-ink">Personal workspace</p></div><MoreHorizontal className="size-4 text-ink" /></div>
       </aside>
 
       <section className="lg:pl-[248px]">
