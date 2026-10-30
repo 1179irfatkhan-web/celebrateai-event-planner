@@ -36,7 +36,7 @@ function classifyFailure(error: unknown, elapsedMs: number): Failure {
     return { category: 'aborted', status: 499, publicMessage: 'The Gemini request was cancelled. Please try again.', diagnostic: 'The Gemini request was aborted before the provider deadline.' }
   }
   if (status === 401 || status === 403 || normalized.includes('unauthorized') || normalized.includes('api key') || normalized.includes('permission')) {
-    return { category: 'invalid-key', status: status ?? 502, publicMessage: 'Gemini could not authenticate. Check the server-side GCP_API_KEY configuration.', diagnostic: `Gemini rejected the request${status ? ` with HTTP ${status}` : ''}.` }
+    return { category: 'invalid-key', status: status ?? 502, publicMessage: 'Gemini could not authenticate. Check the server-side GEMINI_API_KEY configuration.', diagnostic: `Gemini rejected the request${status ? ` with HTTP ${status}` : ''}.` }
   }
   if (status === 429 || normalized.includes('quota') || normalized.includes('rate limit') || normalized.includes('resource exhausted')) {
     return { category: 'quota-rate-limit', status: 429, publicMessage: 'Gemini is temporarily at its usage limit. Please try again shortly.', diagnostic: `Gemini reported a quota or rate-limit failure${status ? ` with HTTP ${status}` : ''}.` }
@@ -95,9 +95,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Each message needs a valid role and text.', code: 'invalid-request', requestId }, { status: 400, headers: { 'x-request-id': requestId } })
   }
 
-  const apiKey = process.env.GCP_API_KEY
+  const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) {
-    const failure: Failure = { category: 'missing-key', status: 503, publicMessage: 'Gemini is not configured. Add the server-side GCP_API_KEY value in the project environment.', diagnostic: 'GCP_API_KEY is missing from the server environment.' }
+    const failure: Failure = { category: 'missing-key', status: 503, publicMessage: 'Gemini is not configured. Add the server-side GEMINI_API_KEY value in the project environment.', diagnostic: 'GEMINI_API_KEY is missing from the server environment.' }
     return failureResponse(failure, requestId)
   }
 
