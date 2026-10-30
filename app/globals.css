@@ -181,7 +181,10 @@
   button, input {
     font: inherit;
   }
-  button:focus-visible, input:focus-visible {
+  .sidebar-nav button:not(.bg-plum), .sidebar-manage button { color: var(--ink); }
+.sidebar-nav button.bg-plum { color: white; }
+
+button:focus-visible, input:focus-visible {
     outline: 2px solid #7f304f;
     outline-offset: 2px;
   }
