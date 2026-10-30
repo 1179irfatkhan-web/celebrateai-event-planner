@@ -22,8 +22,8 @@ test('client code does not contain server-only secret names or unsafe HTML sinks
   assert.doesNotMatch(page, /dangerouslySetInnerHTML/)
 })
 
-test('the current app is explicitly demo-only and has no data mutation endpoints', async () => {
+test('the dashboard stays honest about unavailable persistence', async () => {
   const page = await readProjectFile('app/page.tsx')
   assert.match(page, /Demo workspace/)
-  assert.equal((await readProjectFile('app/page.tsx')).includes('fetch('), false)
+  assert.doesNotMatch(page, /localStorage|sessionStorage|insert\(|update\(|delete\(/i)
 })

@@ -27,14 +27,16 @@ test('financial calculations are not exposed without a tested implementation', a
   assert.doesNotMatch(code, /stripe|paymentintent|checkout|balance|ledger/i)
 })
 
-test('data persistence and event CRUD are not exposed as client-only features', async () => {
+test('data persistence is not faked in client-only storage', async () => {
   const code = await source()
-  assert.doesNotMatch(code, /localStorage|sessionStorage|supabase|insert\(|update\(|delete\(/i)
+  assert.doesNotMatch(code, /localStorage|sessionStorage|insert\(|update\(|delete\(/i)
 })
 
-test('authorization-sensitive routes are absent until authentication is implemented', async () => {
+test('authentication routes and callback are present', async () => {
   const files = await routeFiles()
-  assert.equal(files.some((file) => /route\.(ts|js)$/.test(file)), false)
+  assert.equal(files.some((file) => file.endsWith('/auth/callback/route.ts')), true)
+  assert.equal(files.some((file) => file.endsWith('/auth/login/page.tsx')), true)
+  assert.equal(files.some((file) => file.endsWith('/auth/sign-up/page.tsx')), true)
 })
 
 test('AI tool access and schema validation are not exposed without an AI route', async () => {
