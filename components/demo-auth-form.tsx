@@ -1,7 +1,7 @@
 'use client'
 
-import { createDemoAccountSession, createDemoSession, getDemoAccount, isDemoEmailRegistered, registerDemoAccount } from '@/lib/demo-auth'
-import { Eye, EyeOff, LoaderCircle } from 'lucide-react'
+import { createDemoAccountSession, createDemoSession, DEMO_EMAIL, DEMO_PASSWORD, getDemoAccount, isDemoEmailRegistered, registerDemoAccount } from '@/lib/demo-auth'
+import { Check, Copy, Eye, EyeOff, LoaderCircle } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { FormEvent, useEffect, useState } from 'react'
@@ -21,12 +21,34 @@ export function DemoAuthForm({ mode }: { mode: AuthMode }) {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [copiedField, setCopiedField] = useState<'email' | 'password' | null>(null)
   const isSignup = mode === 'signup'
   const nextPath = searchParams.get('next') || '/'
 
   useEffect(() => {
     if (typeof window !== 'undefined' && window.sessionStorage.getItem('celebrateai-demo-session')) router.replace('/')
   }, [router])
+
+  async function copyDemoValue(field: 'email' | 'password', value: string) {
+    try {
+      await navigator.clipboard.writeText(value)
+      setCopiedField(field)
+      window.setTimeout(() => setCopiedField(null), 1600)
+    } catch {
+      setError('Copy is unavailable in this browser. Select the credential and copy it manually.')
+    }
+  }
+
+  function tryDemoAccount() {
+    setError('')
+    setSuccess('')
+    setEmail(DEMO_EMAIL)
+    setPassword(DEMO_PASSWORD)
+    setIsLoading(true)
+    createDemoAccountSession()
+    setSuccess('Demo account ready. Opening your workspace…')
+    window.setTimeout(() => router.replace(nextPath), 500)
+  }
 
   function validate() {
     if (isSignup && !name.trim()) return 'Enter your full name.'
@@ -59,7 +81,7 @@ export function DemoAuthForm({ mode }: { mode: AuthMode }) {
       return
     }
 
-    if (email.trim().toLowerCase() === 'demo@celebrateai.app') {
+    if (email.trim().toLowerCase() === DEMO_EMAIL) {
       createDemoAccountSession()
       setSuccess('Demo account ready. Opening your workspace…')
       window.setTimeout(() => router.replace(nextPath), 500)
@@ -86,6 +108,17 @@ export function DemoAuthForm({ mode }: { mode: AuthMode }) {
           <p className="mt-2 text-sm leading-6 text-muted">{isSignup ? 'Create a temporary demo identity for your hackathon presentation.' : 'Continue planning your celebration with your demo workspace.'}</p>
         </div>
         <div className="mb-5 rounded-xl border border-gold/40 bg-gold/10 px-3 py-2.5 text-xs font-medium text-plum">Demo mode — not for real accounts. Passwords are never stored.</div>
+        {!isSignup && <section aria-labelledby="demo-access-title" className="mb-5 rounded-2xl border border-plum/20 bg-plum/[0.06] p-4 shadow-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div><p className="text-[11px] font-bold uppercase tracking-[0.16em] text-plum">Hackathon Demo Account</p><h2 id="demo-access-title" className="mt-1 font-display text-lg font-semibold">Explore the workspace instantly</h2></div>
+            <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-plum">Demo</span>
+          </div>
+          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+            {([['Email', DEMO_EMAIL, 'email'], ['Password', DEMO_PASSWORD, 'password']] as const).map(([label, value, field]) => <div key={field} className="rounded-xl border border-line bg-white p-3"><p className="text-[11px] font-semibold uppercase tracking-wider text-muted">{label}</p><div className="mt-1 flex items-center justify-between gap-2"><code className="min-w-0 truncate text-sm font-semibold text-ink">{value}</code><button type="button" onClick={() => void copyDemoValue(field, value)} className="inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-plum hover:bg-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plum/40" aria-label={`Copy demo ${label.toLowerCase()}`}>{copiedField === field ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}{copiedField === field ? 'Copied!' : 'Copy'}</button></div></div>)}
+          </div>
+          <button type="button" onClick={tryDemoAccount} disabled={isLoading} className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-plum px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-plum/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plum/40 disabled:cursor-not-allowed disabled:opacity-60">{isLoading && <LoaderCircle className="size-4 animate-spin" />}Try Demo Account</button>
+          <p className="mt-2 text-center text-xs text-muted">For presentation use only. No password is stored.</p>
+        </section>}
         <form onSubmit={handleSubmit} noValidate className="space-y-5">
           {isSignup && <div><label htmlFor="full-name" className="mb-2 block text-sm font-medium">Full name</label><input id="full-name" name="full-name" type="text" autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} className="min-h-11 w-full rounded-xl border border-line bg-ivory px-3 text-sm outline-none focus:ring-2 focus:ring-plum/30" /></div>}
           <div><label htmlFor="email" className="mb-2 block text-sm font-medium">Email address</label><input id="email" name="email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} className="min-h-11 w-full rounded-xl border border-line bg-ivory px-3 text-sm outline-none focus:ring-2 focus:ring-plum/30" /></div>
@@ -95,7 +128,7 @@ export function DemoAuthForm({ mode }: { mode: AuthMode }) {
           {success && <p role="status" className="rounded-lg border border-sage/30 bg-sage/10 px-3 py-2 text-sm text-sage">{success}</p>}
           <button type="submit" disabled={isLoading} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-plum px-4 py-2.5 text-sm font-semibold text-white hover:bg-plum/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plum/40 disabled:cursor-not-allowed disabled:opacity-60">{isLoading && <LoaderCircle className="size-4 animate-spin" />}{isLoading ? (isSignup ? 'Creating account…' : 'Signing in…') : (isSignup ? 'Create Account' : 'Log In')}</button>
         </form>
-        {!isSignup && <div className="mt-4"><div className="flex items-center gap-3 text-xs text-muted"><span className="h-px flex-1 bg-line" />or<span className="h-px flex-1 bg-line" /></div><button type="button" onClick={() => { createDemoAccountSession(); setSuccess('Demo account ready. Opening your workspace…'); window.setTimeout(() => router.replace('/'), 500) }} className="mt-4 min-h-11 w-full rounded-xl border border-plum/30 bg-white px-4 py-2.5 text-sm font-semibold text-plum hover:bg-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plum/40">Try Demo Account</button><p className="mt-2 text-center text-xs text-muted">Use demo@celebrateai.app with any non-empty password.</p></div>}
+        {isSignup && <button type="button" onClick={tryDemoAccount} className="mt-4 min-h-10 w-full rounded-xl border border-plum/25 bg-white px-4 py-2 text-sm font-semibold text-plum hover:bg-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plum/40">Just exploring? Try Demo Account</button>}
         <p className="mt-6 text-center text-sm text-muted">{isSignup ? <>Already have an account? <Link href="/login" className="font-semibold text-plum hover:underline">Log in</Link></> : <>Don&apos;t have an account? <Link href="/signup" className="font-semibold text-plum hover:underline">Sign up</Link></>}</p>
       </section>
     </main>

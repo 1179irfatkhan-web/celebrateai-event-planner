@@ -1,6 +1,8 @@
 export const DEMO_ACCOUNT_KEY = 'celebrateai-demo-account'
 export const DEMO_SESSION_KEY = 'celebrateai-demo-session'
 export const DEMO_AUTH_EVENT = 'celebrateai-demo-auth-change'
+export const DEMO_EMAIL = 'demo@celebrateai.com'
+export const DEMO_PASSWORD = 'Demo@123'
 
 export type DemoIdentity = {
   name: string
@@ -9,7 +11,7 @@ export type DemoIdentity = {
 
 const DEMO_IDENTITY: DemoIdentity = {
   name: 'Aarav & Kavya',
-  email: 'demo@celebrateai.app',
+  email: DEMO_EMAIL,
 }
 
 function read<T>(key: string): T | null {
