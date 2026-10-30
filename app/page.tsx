@@ -1,9 +1,11 @@
 'use client'
 
+import { DemoAuthGate } from '@/components/demo-auth-gate'
+import { clearDemoSession } from '@/lib/demo-auth'
+import { createClient } from '@/lib/supabase/client'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import {
   ArrowUpRight,
   Bell,
@@ -106,8 +108,9 @@ export default function Page() {
   const closeAssistant = () => setShowAssistant(false)
 
   const handleSignOut = async () => {
+    clearDemoSession()
     await createClient().auth.signOut()
-    router.replace('/auth/login')
+    router.replace('/login')
     router.refresh()
   }
 
@@ -150,7 +153,8 @@ export default function Page() {
   const visibleTasks = useMemo(() => tasks.filter((task) => task.title.toLowerCase().includes(query.toLowerCase())), [query])
 
   return (
-    <main className="min-h-screen bg-ivory text-ink">
+    <DemoAuthGate>
+      <main className="min-h-screen bg-ivory text-ink">
       <aside className={`fixed inset-y-0 left-0 z-40 flex w-[248px] flex-col border-r border-line bg-[#fffdf9] px-5 py-6 transition-transform lg:translate-x-0 ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="flex items-center justify-between px-2">
           <div className="flex items-center gap-2.5">
@@ -203,7 +207,8 @@ export default function Page() {
       </section>
 
       {showAssistant && <div className="fixed inset-0 z-50 flex items-end justify-end bg-ink/20 p-4 backdrop-blur-sm md:items-center md:p-8" onMouseDown={(event) => { if (event.target === event.currentTarget) closeAssistant() }}><div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="assistant-title" className="flex max-h-[min(680px,calc(100vh-2rem))] w-full max-w-md flex-col rounded-2xl border border-line bg-white p-6 shadow-2xl"><div className="flex shrink-0 items-start justify-between"><div><div className="mb-3 grid size-10 place-items-center rounded-xl bg-plum text-gold"><Sparkles className="size-5" /></div><h2 id="assistant-title" className="font-display text-2xl font-semibold">Ask CelebrateAI</h2><p className="mt-1 text-sm text-muted">Ask about your wedding plan and get a live recommendation.</p></div><button ref={closeAssistantRef} onClick={closeAssistant} className="min-h-11 min-w-11 rounded-lg p-2 text-muted hover:bg-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plum/40" aria-label="Close assistant"><X className="size-4" /></button></div><div className="mt-6 min-h-0 flex-1 overflow-y-auto rounded-xl bg-[#fcf8f3] p-4"><div className="flex flex-col gap-3" aria-live="polite">{assistantMessages.length === 0 && <p className="text-sm leading-6 text-muted">Try asking about catering, guest logistics, the budget, or what to do next.</p>}{assistantMessages.map((message, index) => <div key={`${message.role}-${index}`} className={`max-w-[92%] rounded-xl px-3 py-2.5 text-sm leading-6 ${message.role === 'user' ? 'self-end bg-plum text-white' : 'self-start bg-white text-ink shadow-sm'}`}><p className="whitespace-pre-wrap">{message.content}</p></div>)}{isAssistantLoading && <div className="self-start rounded-xl bg-white px-3 py-2.5 text-sm text-muted shadow-sm" role="status">CelebrateAI is thinking…</div>}{assistantError && <p className="rounded-lg border border-rose/30 bg-rose/10 px-3 py-2 text-sm text-plum" role="alert">{assistantError}</p>}</div></div><form className="mt-4 shrink-0" onSubmit={(event) => { event.preventDefault(); void sendAssistantMessage() }}><label htmlFor="assistant-input" className="sr-only">Message CelebrateAI</label><textarea id="assistant-input" value={assistantInput} onChange={(event) => setAssistantInput(event.target.value)} onKeyDown={handleAssistantKeyDown} disabled={isAssistantLoading} rows={3} maxLength={2000} placeholder="What should we plan next?" className="w-full resize-none rounded-xl border border-line bg-white px-3 py-2.5 text-sm outline-none placeholder:text-muted focus:ring-2 focus:ring-plum/30 disabled:cursor-not-allowed disabled:opacity-60" /><div className="mt-2 flex items-center justify-between gap-3"><p className="text-[11px] text-muted">Enter to send · Shift+Enter for a new line</p><button type="submit" disabled={isAssistantLoading || !assistantInput.trim()} className="min-h-11 rounded-xl bg-plum px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-plum/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plum/40 disabled:cursor-not-allowed disabled:opacity-50">{isAssistantLoading ? 'Sending…' : 'Send'}</button></div></form></div></div>}
-    </main>
+      </main>
+    </DemoAuthGate>
   )
 }
 
