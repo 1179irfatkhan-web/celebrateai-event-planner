@@ -1,7 +1,6 @@
 'use client'
 
 import { DemoAuthGate } from '@/components/demo-auth-gate'
-import { clearDemoSession } from '@/lib/demo-auth'
 import { createClient } from '@/lib/supabase/client'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
@@ -108,7 +107,6 @@ export default function Page() {
   const closeAssistant = () => setShowAssistant(false)
 
   const handleSignOut = async () => {
-    clearDemoSession()
     await createClient().auth.signOut()
     router.replace('/login')
     router.refresh()

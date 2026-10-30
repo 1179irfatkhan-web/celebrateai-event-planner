@@ -1,6 +1,5 @@
 'use client'
 
-import { DEMO_AUTH_EVENT, getDemoSession } from '@/lib/demo-auth'
 import { createClient } from '@/lib/supabase/client'
 import { usePathname, useRouter } from 'next/navigation'
 import { ReactNode, useEffect, useState } from 'react'
@@ -13,10 +12,6 @@ export function DemoAuthGate({ children }: { children: ReactNode }) {
   useEffect(() => {
     let isActive = true
     const checkSession = async () => {
-      if (getDemoSession()) {
-        if (isActive) setIsReady(true)
-        return
-      }
       const { data } = await createClient().auth.getUser()
       if (!isActive) return
       if (!data.user) {
@@ -25,12 +20,9 @@ export function DemoAuthGate({ children }: { children: ReactNode }) {
       }
       setIsReady(true)
     }
-    const handleAuthChange = () => void checkSession()
     void checkSession()
-    window.addEventListener(DEMO_AUTH_EVENT, handleAuthChange)
     return () => {
       isActive = false
-      window.removeEventListener(DEMO_AUTH_EVENT, handleAuthChange)
     }
   }, [pathname, router])
 

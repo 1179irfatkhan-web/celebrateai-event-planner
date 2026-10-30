@@ -1,6 +1,5 @@
-import { DemoAuthForm } from '@/components/demo-auth-form'
-import { Suspense } from 'react'
+import { redirect } from 'next/navigation'
 
-export default function DemoLoginPage() {
-  return <Suspense fallback={<div className="min-h-screen bg-ivory" />}><DemoAuthForm mode="login" /></Suspense>
+export default function LoginAliasPage() {
+  redirect('/auth/login')
 }
