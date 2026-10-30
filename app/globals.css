@@ -5,6 +5,15 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --color-ivory: var(--ivory);
+  --color-ink: var(--ink);
+  --color-plum: var(--plum);
+  --color-rose: var(--rose);
+  --color-gold: var(--gold);
+  --color-sage: var(--sage);
+  --color-soft: var(--soft);
+  --color-line: var(--line);
+  --color-muted: var(--muted-foreground);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -47,6 +56,15 @@
 
 :root {
   color-scheme: light;
+  --ivory: oklch(0.985 0.012 80);
+  --ink: oklch(0.23 0.035 330);
+  --plum: oklch(0.38 0.13 350);
+  --rose: oklch(0.63 0.29 8);
+  --gold: oklch(0.76 0.14 78);
+  --sage: oklch(0.54 0.09 145);
+  --soft: oklch(0.96 0.018 75);
+  --line: oklch(0.90 0.025 72);
+  --muted: oklch(0.55 0.025 320);
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -159,5 +177,21 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: Arial, Helvetica, sans-serif;
   }
+  button, input {
+    font: inherit;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+.shadow-card {
+  box-shadow: 0 8px 28px rgba(76, 42, 53, 0.045);
 }
