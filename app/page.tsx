@@ -121,15 +121,11 @@ export default function Page() {
     setAssistantError('')
     setIsAssistantLoading(true)
 
-    const controller = new AbortController()
-    const timeout = window.setTimeout(() => controller.abort(), 20_000)
-
     try {
       const response = await fetch('/api/assistant', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: nextMessages }),
-        signal: controller.signal,
       })
       const data = await response.json().catch(() => null)
       if (!response.ok || !data?.message?.content) {
@@ -139,7 +135,6 @@ export default function Page() {
     } catch (error) {
       setAssistantError(error instanceof Error ? error.message : 'The assistant could not respond.')
     } finally {
-      window.clearTimeout(timeout)
       setIsAssistantLoading(false)
     }
   }
