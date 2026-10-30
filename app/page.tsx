@@ -63,14 +63,14 @@ export default function Page() {
           <button className="rounded-lg p-2 text-muted hover:bg-soft lg:hidden" aria-label="Close menu" onClick={() => setIsMenuOpen(false)}><X className="size-4" /></button>
         </div>
         <div className="mt-11 flex flex-1 flex-col">
-          <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">Workspace</p>
+          <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink/60">Workspace</p>
           <nav className="mt-3 flex flex-col gap-1" aria-label="Workspace navigation">
-            {navItems.map(({ label, icon: Icon }) => <button key={label} onClick={() => { setActiveNav(label); setIsMenuOpen(false) }} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition ${activeNav === label ? 'bg-plum text-white shadow-sm' : 'text-muted hover:bg-soft hover:text-ink'}`}><Icon className="size-[17px]" />{label}</button>)}
+            {navItems.map(({ label, icon: Icon }) => <button key={label} onClick={() => { setActiveNav(label); setIsMenuOpen(false) }} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plum/40 ${activeNav === label ? 'bg-plum text-white shadow-sm' : 'text-ink/80 hover:bg-soft hover:text-ink'}`}><Icon className="size-[17px]" />{label}</button>)}
           </nav>
-          <p className="mt-10 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">Manage</p>
+          <p className="mt-10 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink/60">Manage</p>
           <nav className="mt-3 flex flex-col gap-1">
-            <button className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-muted hover:bg-soft hover:text-ink"><CalendarDays className="size-[17px]" />Events <span className="ml-auto rounded-full bg-soft px-2 py-0.5 text-[11px]">3</span></button>
-            <button className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-muted hover:bg-soft hover:text-ink"><Sparkles className="size-[17px]" />AI ideas</button>
+            <button className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-ink/80 transition hover:bg-soft hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plum/40"><CalendarDays className="size-[17px]" />Events <span className="ml-auto rounded-full bg-soft px-2 py-0.5 text-[11px]">3</span></button>
+            <button className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-ink/80 transition hover:bg-soft hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plum/40"><Sparkles className="size-[17px]" />AI ideas</button>
           </nav>
         </div>
         <div className="rounded-2xl bg-plum px-4 py-4 text-white">
