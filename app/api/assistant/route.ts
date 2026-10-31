@@ -109,9 +109,14 @@ export async function POST(request: Request) {
   }
 
   const startedAt = Date.now()
-  const { data: event } = await supabase.from('events').select('id,name,event_type,event_date,guest_count,location').order('event_date', { ascending: true, nullsFirst: false }).limit(1).maybeSingle()
+  const { data: event } = await supabase.from('events').select('id,name,event_type,event_date,guest_count,location,total_budget_cents').eq('user_id', user.id).order('event_date', { ascending: true, nullsFirst: false }).limit(1).maybeSingle()
+  const [{ data: tasks }, { data: budget }, { data: vendors }] = event ? await Promise.all([
+    supabase.from('event_tasks').select('title,due_date,completed,priority').eq('event_id', event.id).order('completed').limit(12),
+    supabase.from('budgets').select('total_cents,spent_cents,currency').eq('event_id', event.id).maybeSingle(),
+    supabase.from('vendors').select('name,category,status').eq('event_id', event.id).limit(12),
+  ]) : [{ data: null }, { data: null }, { data: null }]
   const eventContext = event
-    ? `Current event: ${event.name}; type: ${event.event_type}; date: ${event.event_date ?? 'not set'}; guests: ${event.guest_count}; location: ${event.location ?? 'not set'}.`
+    ? `Current event: ${event.name}; type: ${event.event_type}; date: ${event.event_date ?? 'not set'}; guests: ${event.guest_count}; location: ${event.location ?? 'not set'}; budget: ${budget ? `${budget.spent_cents}/${budget.total_cents} ${budget.currency}` : 'not set'}; open tasks: ${(tasks ?? []).filter((task) => !task.completed).map((task) => `${task.title} (${task.priority})`).join(', ') || 'none'}; vendors: ${(vendors ?? []).map((vendor) => `${vendor.name} (${vendor.status})`).join(', ') || 'none'}.`
     : 'The user has not created an event yet.'
   console.info(`[assistant] requestId=${requestId} stage=validated model=${GEMINI_MODEL} keyConfigured=true eventContext=${event ? 'available' : 'empty'}`)
 

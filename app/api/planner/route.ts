@@ -5,6 +5,7 @@ const text = (value: unknown, max = 160) => typeof value === 'string' ? value.tr
 const id = (value: unknown) => typeof value === 'string' && /^[0-9a-f-]{36}$/i.test(value) ? value : ''
 const nonNegativeInt = (value: unknown) => typeof value === 'number' && Number.isInteger(value) && value >= 0 ? value : null
 const oneOf = <T extends string>(value: unknown, values: readonly T[], fallback: T) => values.includes(value as T) ? value as T : fallback
+const dateText = (value: unknown) => { const candidate = text(value, 10); if (!candidate) return null; if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(candidate)) return null; const parsed = new Date(`${candidate}T00:00:00Z`); return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === candidate ? candidate : null }
 
 const eventColumns = 'id,name,event_type,event_date,guest_count,location,total_budget_cents'
 const taskColumns = 'id,event_id,title,due_date,completed,priority,status'
@@ -41,7 +42,7 @@ export async function POST(request: Request) {
   if (action === 'create_event') {
     const name = text(body.name, 120)
     if (!name) return NextResponse.json({ error: 'Event name is required.' }, { status: 400 })
-    const { data, error } = await supabase.from('events').insert({ user_id: user.id, name, event_type: text(body.event_type, 40) || 'Celebration', event_date: text(body.event_date, 10) || null, guest_count: nonNegativeInt(body.guest_count) ?? 0, location: text(body.location, 160) || null, total_budget_cents: nonNegativeInt(body.total_budget_cents) ?? 0 }).select(eventColumns).single()
+    const { data, error } = await supabase.from('events').insert({ user_id: user.id, name, event_type: text(body.event_type, 40) || 'Celebration', event_date: dateText(body.event_date), guest_count: nonNegativeInt(body.guest_count) ?? 0, location: text(body.location, 160) || null, total_budget_cents: nonNegativeInt(body.total_budget_cents) ?? 0 }).select(eventColumns).single()
     if (error) return NextResponse.json({ error: 'Could not create event.' }, { status: 400 })
     const budgetResult = await supabase.from('budgets').insert({ event_id: data.id, total_cents: nonNegativeInt(body.total_budget_cents) ?? 0 }).select('id,event_id,total_cents,spent_cents,currency').single()
     if (budgetResult.error) return NextResponse.json({ event: data, warning: 'Event created, but its budget record could not be initialized.' })
@@ -55,7 +56,7 @@ export async function POST(request: Request) {
     const values: Record<string, unknown> = {}
     if (typeof body.name === 'string') values.name = text(body.name, 120)
     if (typeof body.event_type === 'string') values.event_type = text(body.event_type, 40)
-    if (typeof body.event_date === 'string') values.event_date = text(body.event_date, 10) || null
+    if (typeof body.event_date === 'string') values.event_date = dateText(body.event_date)
     if (typeof body.location === 'string') values.location = text(body.location, 160) || null
     if (nonNegativeInt(body.guest_count) !== null) values.guest_count = body.guest_count
     if (nonNegativeInt(body.total_budget_cents) !== null) values.total_budget_cents = body.total_budget_cents
@@ -75,7 +76,7 @@ export async function POST(request: Request) {
     const title = text(body.title, 160)
     if (!title) return NextResponse.json({ error: 'Task title is required.' }, { status: 400 })
     const priority = oneOf(body.priority, ['low', 'medium', 'high'] as const, 'medium')
-    const { data, error } = await supabase.from('event_tasks').insert({ event_id: eventId, title, due_date: text(body.due_date, 10) || null, priority, status: 'open' }).select(taskColumns).single()
+    const { data, error } = await supabase.from('event_tasks').insert({ event_id: eventId, title, due_date: dateText(body.due_date), priority, status: 'open' }).select(taskColumns).single()
     if (error) return NextResponse.json({ error: 'Could not create task.' }, { status: 400 })
     return NextResponse.json({ task: data })
   }
@@ -85,7 +86,7 @@ export async function POST(request: Request) {
     const values: Record<string, unknown> = {}
     if (typeof body.completed === 'boolean') { values.completed = body.completed; values.status = body.completed ? 'completed' : 'open' }
     if (typeof body.title === 'string') values.title = text(body.title, 160)
-    if (typeof body.due_date === 'string') values.due_date = text(body.due_date, 10) || null
+    if (typeof body.due_date === 'string') values.due_date = dateText(body.due_date)
     if (['low', 'medium', 'high'].includes(String(body.priority))) values.priority = body.priority
     if (!taskId || !Object.keys(values).length) return NextResponse.json({ error: 'Invalid task update.' }, { status: 400 })
     const { data, error } = await supabase.from('event_tasks').update(values).eq('id', taskId).eq('event_id', eventId).select(taskColumns).single()
