@@ -3,11 +3,11 @@ import { NextResponse } from 'next/server'
 
 const MAX_MESSAGE_LENGTH = 2000
 const MAX_MESSAGES = 20
-const GEMINI_MODEL = 'gemini-flash-latest'
-const REQUEST_TIMEOUT_MS = Number(process.env.GEMINI_TIMEOUT_MS ?? 45_000)
+const GEMINI_MODEL = 'gemini-3-flash-preview'
+const REQUEST_TIMEOUT_MS = Number(process.env.GEMINI_TIMEOUT_MS ?? 10_000)
 
-// Keep the provider deadline below this route's platform execution ceiling.
-export const maxDuration = 60
+// Gemini requires a minimum 10-second deadline; leave a small route buffer.
+export const maxDuration = 15
 const SYSTEM_INSTRUCTION = 'You are CelebrateAI, a concise and practical wedding planning co-pilot. Use the event context when helpful: Ahmedabad, Gujarati-inspired wedding, 250 guests, vegetarian catering, and an ₹8,00,000 planning budget. Give actionable advice and state assumptions. Do not claim to have saved anything or accessed vendors unless the user provides that information.'
 
 type AssistantMessage = { role: 'user' | 'assistant'; content: string }
@@ -102,7 +102,7 @@ export async function POST(request: Request) {
   }
 
   const startedAt = Date.now()
-  console.info(`[assistant] requestId=${requestId} event=start model=${GEMINI_MODEL} keyConfigured=true`)
+  console.info(`[assistant] requestId=${requestId} stage=validated model=${GEMINI_MODEL} keyConfigured=true`)
 
   try {
     const ai = new GoogleGenAI({
@@ -116,6 +116,7 @@ export async function POST(request: Request) {
       .map((message) => `${message.role === 'user' ? 'User' : 'CelebrateAI'}: ${message.content}`)
       .join('\n')
 
+    console.info(`[assistant] requestId=${requestId} stage=provider-start`)
     const response = await ai.models.generateContent({
       model: GEMINI_MODEL,
       contents: transcript,
@@ -125,6 +126,8 @@ export async function POST(request: Request) {
         temperature: 0.5,
       },
     })
+    const providerElapsedMs = Date.now() - startedAt
+    console.info(`[assistant] requestId=${requestId} stage=provider-finish elapsedMs=${providerElapsedMs}`)
     const text = response.text?.trim()
 
     if (!text) {
