@@ -9,7 +9,7 @@ const REQUEST_TIMEOUT_MS = Number(process.env.GEMINI_TIMEOUT_MS ?? 10_000)
 
 // Gemini requires a minimum 10-second deadline; leave a small route buffer.
 export const maxDuration = 15
-const SYSTEM_INSTRUCTION = 'You are CelebrateAI, a concise and practical wedding planning co-pilot. Use the event context when helpful: Ahmedabad, Gujarati-inspired wedding, 250 guests, vegetarian catering, and an ₹8,00,000 planning budget. Give actionable advice and state assumptions. Do not claim to have saved anything or accessed vendors unless the user provides that information.'
+const SYSTEM_INSTRUCTION = 'You are CelebrateAI, a concise and practical event-planning co-pilot. Use the authenticated user\'s event context when helpful. Give actionable advice, state assumptions, and do not claim to have saved anything or accessed vendors unless the user provides that information.'
 
 type AssistantMessage = { role: 'user' | 'assistant'; content: string }
 type FailureCategory = 'missing-key' | 'invalid-key' | 'quota-rate-limit' | 'model-unavailable' | 'provider-error' | 'network-error' | 'aborted' | 'timeout' | 'empty-response' | 'unknown'
@@ -109,7 +109,11 @@ export async function POST(request: Request) {
   }
 
   const startedAt = Date.now()
-  console.info(`[assistant] requestId=${requestId} stage=validated model=${GEMINI_MODEL} keyConfigured=true`)
+  const { data: event } = await supabase.from('events').select('id,name,event_type,event_date,guest_count,location').order('event_date', { ascending: true, nullsFirst: false }).limit(1).maybeSingle()
+  const eventContext = event
+    ? `Current event: ${event.name}; type: ${event.event_type}; date: ${event.event_date ?? 'not set'}; guests: ${event.guest_count}; location: ${event.location ?? 'not set'}.`
+    : 'The user has not created an event yet.'
+  console.info(`[assistant] requestId=${requestId} stage=validated model=${GEMINI_MODEL} keyConfigured=true eventContext=${event ? 'available' : 'empty'}`)
 
   try {
     const ai = new GoogleGenAI({
@@ -128,7 +132,7 @@ export async function POST(request: Request) {
       model: GEMINI_MODEL,
       contents: transcript,
       config: {
-        systemInstruction: SYSTEM_INSTRUCTION,
+        systemInstruction: `${SYSTEM_INSTRUCTION} ${eventContext}`,
         maxOutputTokens: 700,
         temperature: 0.5,
       },

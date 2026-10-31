@@ -1,2 +1,6 @@
-import { WorkspacePage } from '@/components/workspace-page'
-export default function VendorsPage() { return <WorkspacePage title="Vendors" eyebrow="Workspace" description="Compare and manage your caterers, venues, decorators, photographers, and other partners." items={['Catering shortlist', 'Venue options', 'Photography partners']} /> }
+import { PlannerWorkspace } from '@/components/planner-workspace'
+import { getPlannerData } from '@/lib/planner-data'
+
+export default async function VendorsPage() {
+  return <PlannerWorkspace kind="Vendors" data={await getPlannerData()} />
+}

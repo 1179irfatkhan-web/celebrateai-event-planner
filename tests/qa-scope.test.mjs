@@ -27,9 +27,12 @@ test('financial calculations are not exposed without a tested implementation', a
   assert.doesNotMatch(code, /stripe|paymentintent|checkout|balance|ledger/i)
 })
 
-test('data persistence is not faked in client-only storage', async () => {
+test('data persistence uses the authenticated server API, not browser storage', async () => {
   const code = await source()
-  assert.doesNotMatch(code, /localStorage|sessionStorage|insert\(|update\(|delete\(/i)
+  const plannerApi = await import('node:fs/promises').then(({ readFile }) => readFile(join(root, 'app/api/planner/route.ts'), 'utf8'))
+  assert.doesNotMatch(code, /localStorage|sessionStorage/i)
+  assert.match(plannerApi, /from\('events'\)/)
+  assert.match(plannerApi, /from\('event_tasks'\)/)
 })
 
 test('authentication routes and callback are present', async () => {

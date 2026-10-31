@@ -1,2 +1,6 @@
-import { WorkspacePage } from '@/components/workspace-page'
-export default function BudgetPage() { return <WorkspacePage title="Budget" eyebrow="Workspace" description="Track allocations across venue, catering, décor, photography, and the decisions still ahead." items={['Venue & accommodation', 'Catering & beverages', 'Decor & flowers', 'Photography']} /> }
+import { PlannerWorkspace } from '@/components/planner-workspace'
+import { getPlannerData } from '@/lib/planner-data'
+
+export default async function BudgetPage() {
+  return <PlannerWorkspace kind="Budget" data={await getPlannerData()} />
+}
