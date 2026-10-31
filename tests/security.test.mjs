@@ -22,8 +22,11 @@ test('client code does not contain server-only secret names or unsafe HTML sinks
   assert.doesNotMatch(page, /dangerouslySetInnerHTML/)
 })
 
-test('the dashboard stays honest about unavailable persistence', async () => {
+test('the dashboard uses authenticated planner data without browser persistence hacks', async () => {
   const page = await readProjectFile('app/page.tsx')
-  assert.match(page, /Demo workspace/)
+  const plannerApi = await readProjectFile('app/api/planner/route.ts')
+  assert.match(page, /Live workspace/)
+  assert.match(page, /useSWR<DashboardData>\('\/api\/planner'/)
   assert.doesNotMatch(page, /localStorage|sessionStorage|insert\(|update\(|delete\(/i)
+  assert.match(plannerApi, /export async function GET/)
 })
