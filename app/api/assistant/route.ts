@@ -1,4 +1,5 @@
 import { GoogleGenAI } from '@google/genai'
+import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
 const MAX_MESSAGE_LENGTH = 2000
@@ -65,6 +66,12 @@ function failureResponse(failure: Failure, requestId: string) {
 
 export async function POST(request: Request) {
   const requestId = crypto.randomUUID()
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return NextResponse.json({ error: 'Sign in required.', code: 'unauthorized', requestId }, { status: 401, headers: { 'x-request-id': requestId } })
+  }
+
   let body: unknown
 
   try {

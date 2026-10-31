@@ -1,18 +1,29 @@
 # CelebrateAI
 
-CelebrateAI is a polished demo dashboard for an AI-assisted event-planning experience. The current implementation is intentionally labeled **Demo workspace** and uses deterministic in-memory sample content.
+CelebrateAI is an AI-assisted event-planning workspace for weddings, birthdays, and community celebrations. The dashboard presents an intentionally labeled demo workspace while the authentication and assistant paths use the configured Supabase and Gemini integrations.
 
-## Current implementation
+## Implemented
 
+- Supabase email/password authentication with callback handling, email-confirmation messaging, and protected workspace routes.
 - Responsive dashboard shell with desktop sidebar and mobile menu.
-- Demo wedding metrics, budget visualization, milestone/task checklist, and AI insight panel.
-- Filterable task list with keyboard-accessible completion toggles.
-- Accessible AI suggestion dialog with focus management, Escape handling, and a review-before-save label.
-- Security headers and regression tests for the current demo surface.
+- Demo wedding metrics, budget visualization, milestone/task checklist, and AI assistant panel.
+- Live Gemini planning requests through `/api/assistant`, with server-side credentials, bounded execution, validation, request IDs, and categorized failure responses.
+- Clearly labeled deterministic Demo Planning Mode for provider outages or presentations; it is not represented as live AI.
+- Security headers, protected assistant API access, and regression tests for auth boundaries and assistant contracts.
 
-## Important limitation
+## Current limitation
 
-This repository does **not** yet implement authentication, Supabase tables/RLS, persisted events, budget CRUD, vendor CRUD, guest/RSVP CRUD, server-side AI generation, or protected routes. The sample values are not verified vendors, quotations, availability, or live AI output. Do not use this demo as a production event-planning system until those workflows are implemented.
+Events, budgets, guests, vendors, and timeline cards are currently presentation data rather than persisted CRUD workflows. They are not verified vendor quotes, availability, or live event records. A production release still needs a Supabase schema, migrations, RLS policies, server-side resource ownership checks, and persistence UI for those domains.
+
+## Environment
+
+Required server/runtime configuration:
+
+- Supabase URL and publishable/anon key for browser/server session handling.
+- `GEMINI_API_KEY` for live assistant requests. Keep it server-side; never expose it as a `NEXT_PUBLIC_` variable.
+- `NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL` for email-confirmation callbacks in the v0 preview.
+
+The assistant uses `gemini-3-flash-preview`, a 10-second provider deadline, one provider attempt, and a 15-second route ceiling. If Gemini is unavailable, the UI exposes a retry action and a visibly labeled Demo Planning Mode.
 
 ## Run locally
 
@@ -27,13 +38,8 @@ The app runs at `http://localhost:3000`.
 
 ```bash
 pnpm exec tsc --noEmit
-pnpm test:security
-pnpm test:qa
+pnpm test
 pnpm build
 ```
 
-There is currently no ESLint configuration or lint script in the repository, so linting is a documented blocker rather than a claimed passing check.
-
-## Environment
-
-The current demo does not read provider credentials. If Supabase and an AI provider are added, keep credentials server-side, add schema migrations and RLS policies, and update this document with the exact setup and test workflow.
+There is no ESLint configuration or lint script in the repository, so linting remains an explicit verification gap rather than a claimed passing check.
