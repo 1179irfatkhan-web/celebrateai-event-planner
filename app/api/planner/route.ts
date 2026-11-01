@@ -12,6 +12,7 @@ const taskColumns = 'id,event_id,title,due_date,completed,priority,status'
 const guestColumns = 'id,event_id,name,email,rsvp_status,dietary_notes'
 const vendorColumns = 'id,event_id,name,category,status,quoted_cents,estimated_cents,actual_cents,contact_email,contact_phone,notes'
 const categoryColumns = 'id,event_id,name,planned_cents,actual_cents'
+const suggestionColumns = 'id,event_id,title,description,category,source,dismissed'
 
 export async function GET() {
   const supabase = await createClient()
@@ -20,16 +21,17 @@ export async function GET() {
   const { data: events, error } = await supabase.from('events').select(eventColumns).eq('user_id', user.id).order('event_date', { ascending: true, nullsFirst: false })
   if (error) return NextResponse.json({ error: 'Could not load planner data.' }, { status: 500 })
   const eventId = events?.[0]?.id
-  if (!eventId) return NextResponse.json({ events: [], tasks: [], budget: null, guests: [], vendors: [], categories: [] })
-  const [tasksResult, budgetResult, guestsResult, vendorsResult, categoriesResult] = await Promise.all([
+  if (!eventId) return NextResponse.json({ events: [], tasks: [], budget: null, guests: [], vendors: [], categories: [], suggestions: [] })
+  const [tasksResult, budgetResult, guestsResult, vendorsResult, categoriesResult, suggestionsResult] = await Promise.all([
     supabase.from('event_tasks').select(taskColumns).eq('event_id', eventId).order('completed').order('due_date', { ascending: true, nullsFirst: false }),
     supabase.from('budgets').select('id,event_id,total_cents,spent_cents,currency').eq('event_id', eventId).maybeSingle(),
     supabase.from('guests').select(guestColumns).eq('event_id', eventId).order('name'),
     supabase.from('vendors').select(vendorColumns).eq('event_id', eventId).order('name'),
     supabase.from('budget_categories').select(categoryColumns).eq('event_id', eventId).order('name'),
+    supabase.from('ai_suggestions').select(suggestionColumns).eq('event_id', eventId).eq('dismissed', false).order('created_at', { ascending: false }),
   ])
-  if (tasksResult.error || budgetResult.error || guestsResult.error || vendorsResult.error || categoriesResult.error) return NextResponse.json({ error: 'Could not load planner details.' }, { status: 500 })
-  return NextResponse.json({ events: events ?? [], tasks: tasksResult.data ?? [], budget: budgetResult.data ?? null, guests: guestsResult.data ?? [], vendors: vendorsResult.data ?? [], categories: categoriesResult.data ?? [] })
+  if (tasksResult.error || budgetResult.error || guestsResult.error || vendorsResult.error || categoriesResult.error || suggestionsResult.error) return NextResponse.json({ error: 'Could not load planner details.' }, { status: 500 })
+  return NextResponse.json({ events: events ?? [], tasks: tasksResult.data ?? [], budget: budgetResult.data ?? null, guests: guestsResult.data ?? [], vendors: vendorsResult.data ?? [], categories: categoriesResult.data ?? [], suggestions: suggestionsResult.data ?? [] })
 }
 
 export async function POST(request: Request) {

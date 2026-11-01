@@ -21,6 +21,7 @@ test('planner API exposes real persistence workflows', async () => {
   }
   assert.match(route, /budget_categories/)
   assert.match(route, /ai_suggestions/)
+  assert.match(route, /suggestionsResult/)
 })
 
 test('planner API validates input and propagates read failures', async () => {
