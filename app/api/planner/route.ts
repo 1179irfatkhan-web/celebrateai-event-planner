@@ -5,7 +5,7 @@ const text = (value: unknown, max = 160) => typeof value === 'string' ? value.tr
 const id = (value: unknown) => typeof value === 'string' && /^[0-9a-f-]{36}$/i.test(value) ? value : ''
 const nonNegativeInt = (value: unknown) => typeof value === 'number' && Number.isInteger(value) && value >= 0 ? value : null
 const oneOf = <T extends string>(value: unknown, values: readonly T[], fallback: T) => values.includes(value as T) ? value as T : fallback
-const dateText = (value: unknown) => { const candidate = text(value, 10); if (!candidate) return null; if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(candidate)) return null; const parsed = new Date(`${candidate}T00:00:00Z`); return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === candidate ? candidate : null }
+const dateText = (value: unknown) => { const candidate = text(value, 10); if (!candidate) return null; if (!/^\d{4}-\d{2}-\d{2}$/.test(candidate)) return null; const parsed = new Date(`${candidate}T00:00:00Z`); return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === candidate ? candidate : null }
 
 const eventColumns = 'id,name,event_type,event_date,guest_count,location,total_budget_cents'
 const taskColumns = 'id,event_id,title,due_date,completed,priority,status'
@@ -21,14 +21,15 @@ export async function GET() {
   if (error) return NextResponse.json({ error: 'Could not load planner data.' }, { status: 500 })
   const eventId = events?.[0]?.id
   if (!eventId) return NextResponse.json({ events: [], tasks: [], budget: null, guests: [], vendors: [], categories: [] })
-  const [{ data: tasks }, { data: budget }, { data: guests }, { data: vendors }, { data: categories }] = await Promise.all([
+  const [tasksResult, budgetResult, guestsResult, vendorsResult, categoriesResult] = await Promise.all([
     supabase.from('event_tasks').select(taskColumns).eq('event_id', eventId).order('completed').order('due_date', { ascending: true, nullsFirst: false }),
     supabase.from('budgets').select('id,event_id,total_cents,spent_cents,currency').eq('event_id', eventId).maybeSingle(),
     supabase.from('guests').select(guestColumns).eq('event_id', eventId).order('name'),
     supabase.from('vendors').select(vendorColumns).eq('event_id', eventId).order('name'),
     supabase.from('budget_categories').select(categoryColumns).eq('event_id', eventId).order('name'),
   ])
-  return NextResponse.json({ events: events ?? [], tasks: tasks ?? [], budget: budget ?? null, guests: guests ?? [], vendors: vendors ?? [], categories: categories ?? [] })
+  if (tasksResult.error || budgetResult.error || guestsResult.error || vendorsResult.error || categoriesResult.error) return NextResponse.json({ error: 'Could not load planner details.' }, { status: 500 })
+  return NextResponse.json({ events: events ?? [], tasks: tasksResult.data ?? [], budget: budgetResult.data ?? null, guests: guestsResult.data ?? [], vendors: vendorsResult.data ?? [], categories: categoriesResult.data ?? [] })
 }
 
 export async function POST(request: Request) {
