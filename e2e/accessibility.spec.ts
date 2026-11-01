@@ -6,7 +6,7 @@ const password = process.env.E2E_PASSWORD
 
 test('authenticated planner surfaces have no serious axe violations', async ({ page }) => {
   test.skip(!email || !password, 'Set E2E_EMAIL and E2E_PASSWORD for an isolated confirmed test user.')
-  await page.goto('/login')
+  await page.goto('/auth/login')
   await page.getByLabel('Email').fill(email!)
   await page.getByLabel('Password').fill(password!)
   await page.getByRole('button', { name: /sign in/i }).click()

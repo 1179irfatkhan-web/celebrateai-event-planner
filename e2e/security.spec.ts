@@ -10,7 +10,7 @@ test('two independent users cannot see each other’s planner data', async ({ br
   const pageA = await contextA.newPage()
   const pageB = await contextB.newPage()
   for (const [page, user] of [[pageA, userA], [pageB, userB]] as const) {
-    await page.goto('/login')
+    await page.goto('/auth/login')
     await page.getByLabel('Email').fill(user.email!)
     await page.getByLabel('Password').fill(user.password!)
     await page.getByRole('button', { name: /sign in/i }).click()

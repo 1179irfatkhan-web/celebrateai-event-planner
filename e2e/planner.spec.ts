@@ -8,7 +8,7 @@ test.describe('CelebrateAI planner', () => {
   test.skip(!hasFixture, 'Set E2E_EMAIL and E2E_PASSWORD for an isolated confirmed test user.')
 
   test('authenticates and exposes planner controls', async ({ page }) => {
-    await page.goto('/login')
+    await page.goto('/auth/login')
     await page.getByLabel('Email').fill(email!)
     await page.getByLabel('Password').fill(password!)
     await page.getByRole('button', { name: /sign in/i }).click()
