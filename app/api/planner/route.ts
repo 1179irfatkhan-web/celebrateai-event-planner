@@ -5,12 +5,14 @@ const text = (value: unknown, max = 160) => typeof value === 'string' ? value.tr
 const id = (value: unknown) => typeof value === 'string' && /^[0-9a-f-]{36}$/i.test(value) ? value : ''
 const nonNegativeInt = (value: unknown) => typeof value === 'number' && Number.isInteger(value) && value >= 0 ? value : null
 const oneOf = <T extends string>(value: unknown, values: readonly T[], fallback: T) => values.includes(value as T) ? value as T : fallback
+const dateText = (value: unknown) => { const candidate = text(value, 10); if (!candidate) return null; if (!/^\d{4}-\d{2}-\d{2}$/.test(candidate)) return null; const parsed = new Date(`${candidate}T00:00:00Z`); return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === candidate ? candidate : null }
 
 const eventColumns = 'id,name,event_type,event_date,guest_count,location,total_budget_cents'
 const taskColumns = 'id,event_id,title,due_date,completed,priority,status'
 const guestColumns = 'id,event_id,name,email,rsvp_status,dietary_notes'
 const vendorColumns = 'id,event_id,name,category,status,quoted_cents,estimated_cents,actual_cents,contact_email,contact_phone,notes'
 const categoryColumns = 'id,event_id,name,planned_cents,actual_cents'
+const suggestionColumns = 'id,event_id,title,description,category,source,dismissed'
 
 export async function GET() {
   const supabase = await createClient()
@@ -19,15 +21,17 @@ export async function GET() {
   const { data: events, error } = await supabase.from('events').select(eventColumns).eq('user_id', user.id).order('event_date', { ascending: true, nullsFirst: false })
   if (error) return NextResponse.json({ error: 'Could not load planner data.' }, { status: 500 })
   const eventId = events?.[0]?.id
-  if (!eventId) return NextResponse.json({ events: [], tasks: [], budget: null, guests: [], vendors: [], categories: [] })
-  const [{ data: tasks }, { data: budget }, { data: guests }, { data: vendors }, { data: categories }] = await Promise.all([
+  if (!eventId) return NextResponse.json({ events: [], tasks: [], budget: null, guests: [], vendors: [], categories: [], suggestions: [] })
+  const [tasksResult, budgetResult, guestsResult, vendorsResult, categoriesResult, suggestionsResult] = await Promise.all([
     supabase.from('event_tasks').select(taskColumns).eq('event_id', eventId).order('completed').order('due_date', { ascending: true, nullsFirst: false }),
     supabase.from('budgets').select('id,event_id,total_cents,spent_cents,currency').eq('event_id', eventId).maybeSingle(),
     supabase.from('guests').select(guestColumns).eq('event_id', eventId).order('name'),
     supabase.from('vendors').select(vendorColumns).eq('event_id', eventId).order('name'),
     supabase.from('budget_categories').select(categoryColumns).eq('event_id', eventId).order('name'),
+    supabase.from('ai_suggestions').select(suggestionColumns).eq('event_id', eventId).eq('dismissed', false).order('created_at', { ascending: false }),
   ])
-  return NextResponse.json({ events: events ?? [], tasks: tasks ?? [], budget: budget ?? null, guests: guests ?? [], vendors: vendors ?? [], categories: categories ?? [] })
+  if (tasksResult.error || budgetResult.error || guestsResult.error || vendorsResult.error || categoriesResult.error || suggestionsResult.error) return NextResponse.json({ error: 'Could not load planner details.' }, { status: 500 })
+  return NextResponse.json({ events: events ?? [], tasks: tasksResult.data ?? [], budget: budgetResult.data ?? null, guests: guestsResult.data ?? [], vendors: vendorsResult.data ?? [], categories: categoriesResult.data ?? [], suggestions: suggestionsResult.data ?? [] })
 }
 
 export async function POST(request: Request) {
@@ -41,7 +45,7 @@ export async function POST(request: Request) {
   if (action === 'create_event') {
     const name = text(body.name, 120)
     if (!name) return NextResponse.json({ error: 'Event name is required.' }, { status: 400 })
-    const { data, error } = await supabase.from('events').insert({ user_id: user.id, name, event_type: text(body.event_type, 40) || 'Celebration', event_date: text(body.event_date, 10) || null, guest_count: nonNegativeInt(body.guest_count) ?? 0, location: text(body.location, 160) || null, total_budget_cents: nonNegativeInt(body.total_budget_cents) ?? 0 }).select(eventColumns).single()
+    const { data, error } = await supabase.from('events').insert({ user_id: user.id, name, event_type: text(body.event_type, 40) || 'Celebration', event_date: dateText(body.event_date), guest_count: nonNegativeInt(body.guest_count) ?? 0, location: text(body.location, 160) || null, total_budget_cents: nonNegativeInt(body.total_budget_cents) ?? 0 }).select(eventColumns).single()
     if (error) return NextResponse.json({ error: 'Could not create event.' }, { status: 400 })
     const budgetResult = await supabase.from('budgets').insert({ event_id: data.id, total_cents: nonNegativeInt(body.total_budget_cents) ?? 0 }).select('id,event_id,total_cents,spent_cents,currency').single()
     if (budgetResult.error) return NextResponse.json({ event: data, warning: 'Event created, but its budget record could not be initialized.' })
@@ -55,7 +59,7 @@ export async function POST(request: Request) {
     const values: Record<string, unknown> = {}
     if (typeof body.name === 'string') values.name = text(body.name, 120)
     if (typeof body.event_type === 'string') values.event_type = text(body.event_type, 40)
-    if (typeof body.event_date === 'string') values.event_date = text(body.event_date, 10) || null
+    if (typeof body.event_date === 'string') values.event_date = dateText(body.event_date)
     if (typeof body.location === 'string') values.location = text(body.location, 160) || null
     if (nonNegativeInt(body.guest_count) !== null) values.guest_count = body.guest_count
     if (nonNegativeInt(body.total_budget_cents) !== null) values.total_budget_cents = body.total_budget_cents
@@ -75,7 +79,7 @@ export async function POST(request: Request) {
     const title = text(body.title, 160)
     if (!title) return NextResponse.json({ error: 'Task title is required.' }, { status: 400 })
     const priority = oneOf(body.priority, ['low', 'medium', 'high'] as const, 'medium')
-    const { data, error } = await supabase.from('event_tasks').insert({ event_id: eventId, title, due_date: text(body.due_date, 10) || null, priority, status: 'open' }).select(taskColumns).single()
+    const { data, error } = await supabase.from('event_tasks').insert({ event_id: eventId, title, due_date: dateText(body.due_date), priority, status: 'open' }).select(taskColumns).single()
     if (error) return NextResponse.json({ error: 'Could not create task.' }, { status: 400 })
     return NextResponse.json({ task: data })
   }
@@ -85,7 +89,7 @@ export async function POST(request: Request) {
     const values: Record<string, unknown> = {}
     if (typeof body.completed === 'boolean') { values.completed = body.completed; values.status = body.completed ? 'completed' : 'open' }
     if (typeof body.title === 'string') values.title = text(body.title, 160)
-    if (typeof body.due_date === 'string') values.due_date = text(body.due_date, 10) || null
+    if (typeof body.due_date === 'string') values.due_date = dateText(body.due_date)
     if (['low', 'medium', 'high'].includes(String(body.priority))) values.priority = body.priority
     if (!taskId || !Object.keys(values).length) return NextResponse.json({ error: 'Invalid task update.' }, { status: 400 })
     const { data, error } = await supabase.from('event_tasks').update(values).eq('id', taskId).eq('event_id', eventId).select(taskColumns).single()

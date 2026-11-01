@@ -6,14 +6,15 @@ CelebrateAI is an AI-assisted event-planning workspace for weddings, birthdays, 
 
 - Supabase email/password authentication with callback handling, email-confirmation messaging, and protected workspace routes.
 - Responsive dashboard shell with desktop sidebar and mobile menu.
-- Demo wedding metrics, budget visualization, milestone/task checklist, and AI assistant panel.
+- Authenticated dashboard metrics, budget visualization, milestone/task checklist, and AI assistant panel.
+- Supabase-backed event, task, budget, guest, vendor, category, and AI suggestion workflows through the ownership-checked planner API.
 - Live Gemini planning requests through `/api/assistant`, with server-side credentials, bounded execution, validation, request IDs, and categorized failure responses.
 - Clearly labeled deterministic Demo Planning Mode for provider outages or presentations; it is not represented as live AI.
 - Security headers, protected assistant API access, and regression tests for auth boundaries and assistant contracts.
 
-## Current limitation
+## Product boundaries
 
-Events, budgets, guests, vendors, and timeline cards are currently presentation data rather than persisted CRUD workflows. They are not verified vendor quotes, availability, or live event records. A production release still needs a Supabase schema, migrations, RLS policies, server-side resource ownership checks, and persistence UI for those domains.
+The planner persists user-owned event records and planning data through Supabase with RLS and server-side ownership checks. Vendor records are planning notes only: the app does not invent quotes, availability, or verified bookings. Demo Planning Mode is explicitly labeled and is separate from live Gemini responses.
 
 ## Environment
 
@@ -36,10 +37,27 @@ The app runs at `http://localhost:3000`.
 
 ## Checks
 
+Run the required local checks from the project root:
+
 ```bash
-pnpm exec tsc --noEmit
+pnpm install --frozen-lockfile
 pnpm test
-pnpm build
+pnpm exec tsc --noEmit
+pnpm run lint
+pnpm run build
 ```
 
-There is no ESLint configuration or lint script in the repository, so linting remains an explicit verification gap rather than a claimed passing check.
+The browser release checks require an isolated deployment and disposable Supabase users. Configure the seven `E2E_*` variables described in [`docs/e2e-auth-fixture.md`](docs/e2e-auth-fixture.md), then run:
+
+```bash
+pnpm exec playwright install chromium
+pnpm test:e2e
+pnpm test:a11y
+pnpm test:security:e2e
+```
+
+The Playwright suites intentionally do not fall back to demo or production accounts. Missing or invalid disposable credentials block the protected planner, accessibility, and two-user RLS checks.
+
+## Release process
+
+Use [`docs/release-checklist.md`](docs/release-checklist.md) for the controlled merge, post-deployment smoke test, and rollback procedure. Do not merge or deploy until the isolated Playwright and two-user RLS checks execute successfully.
