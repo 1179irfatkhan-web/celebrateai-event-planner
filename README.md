@@ -37,10 +37,27 @@ The app runs at `http://localhost:3000`.
 
 ## Checks
 
+Run the required local checks from the project root:
+
 ```bash
-pnpm exec tsc --noEmit
+pnpm install --frozen-lockfile
 pnpm test
-pnpm build
+pnpm exec tsc --noEmit
+pnpm run lint
+pnpm run build
 ```
 
-There is no ESLint configuration or lint script in the repository, so linting remains an explicit verification gap rather than a claimed passing check.
+The browser release checks require an isolated deployment and disposable Supabase users. Configure the seven `E2E_*` variables described in [`docs/e2e-auth-fixture.md`](docs/e2e-auth-fixture.md), then run:
+
+```bash
+pnpm exec playwright install chromium
+pnpm test:e2e
+pnpm test:a11y
+pnpm test:security:e2e
+```
+
+The Playwright suites intentionally do not fall back to demo or production accounts. Missing or invalid disposable credentials block the protected planner, accessibility, and two-user RLS checks.
+
+## Release process
+
+Use [`docs/release-checklist.md`](docs/release-checklist.md) for the controlled merge, post-deployment smoke test, and rollback procedure. Do not merge or deploy until the isolated Playwright and two-user RLS checks execute successfully.
